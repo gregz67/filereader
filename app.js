@@ -1,6 +1,5 @@
 var fs = require('fs');
 var path = require('path');
-var readline = require('readline');
 
 /**
  *
@@ -9,41 +8,33 @@ var readline = require('readline');
  *
  */
 
-
-var rootPath = 'data/files';
+var filesDir = 'data/files';
 var names = [];
 
-fs.readdir(rootPath, function (err, fileArray) {
+fs.readdir(filesDir, function (err, fileArray) {
   var numFiles = fileArray.length;
   console.log('files to read ' + fileArray);
 
   fileArray.forEach(function (file) {
-    var filePath = path.join(rootPath, file), fsInterface, fileStream;
-    // make sure we are opening only files
-    if (fs.statSync(filePath).isFile()) {
-      console.log('processing ' + filePath);
+    console.log('processing ' + file);
 
-      fileStream = fs.createReadStream(filePath, { 'encoding': 'utf8' });
-      fsInterface = readline.createInterface({
-        'input': fileStream,
-        'output': process.stdout
+    // what events can we listen for on data?
+    fs.readFile(path.join(filesDir, file), function (err, data) {
+
+      var fileLines = data.toString().split('\n');
+
+      fileLines.forEach(function (line) {
+        names.push(line);
       });
-      // for each line
-      fsInterface.on('line', function (data) {
-        names.push(data);
-      });
-      fileStream.on('end', function () {
-        numFiles--;
-        // after last file is read, sort
-        if (numFiles === 0) {
-          console.log("\nDONE!");
-          names.sort().reverse().forEach(function (n) {
-            console.log(n);
-          });
-        }
-      });
-    }
+
+      // this feels *less* wrong
+      numFiles--;
+      if (numFiles === 0) {
+        console.log("\nDONE!");
+        names.sort().reverse().forEach(function (n) {
+          console.log(n);
+        });
+      }
+    });
   });
-
-
 });
