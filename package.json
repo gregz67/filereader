@@ -6,8 +6,7 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "es6-promise": "0.1.x",
-    "Q": "1.0.x"
+    "es6-promise": "0.1.x"
   },
   "devDependencies": {
   }
