@@ -1,8 +1,6 @@
 var fs = require('fs');
-var Q = require('q');
-
-var _ = require('underscore');
-
+var path = require('path');
+var readline = require('readline');
 
 /**
  *
@@ -12,40 +10,39 @@ var _ = require('underscore');
  */
 
 
-var path = '/tmp/node';
+var rootPath = 'data/files';
 var names = [];
 
-fs.readdir(path, function (err, fileArray) {
+fs.readdir(rootPath, function (err, fileArray) {
   var numFiles = fileArray.length;
   console.log('files to read ' + fileArray);
 
-  _.each(fileArray, function (file) {
-    console.log('processing ' + file);
+  fileArray.forEach(function (file) {
+    var filePath = path.join(rootPath, file), fsInterface, fileStream;
+    // make sure we are opening only files
+    if (fs.statSync(filePath).isFile()) {
+      console.log('processing ' + filePath);
 
-    // what events can we listen for on data?
-    fs.readFile(path + '/' + file, { 'flag': 'r' }, function (err, data) {
-
-      var fileLines = data.toString().split('\n');
-      var cleanLines = _.filter(fileLines, function (l) {
-        return l !== '';
+      fileStream = fs.createReadStream(filePath, { 'encoding': 'utf8' });
+      fsInterface = readline.createInterface({
+        'input': fileStream,
+        'output': process.stdout
       });
-
-      _.each(cleanLines, function (line) {
-        names.push(line);
+      // for each line
+      fsInterface.on('line', function (data) {
+        names.push(data);
       });
-
-      // this feels *less* wrong
-      numFiles--;
-      if (numFiles === 0) {
-        console.log("\nDONE!");
-        _.each(names.sort().reverse(), function (n) {
-          console.log(n);
-        });
-      }
-
-    });
-
-
+      fileStream.on('end', function () {
+        numFiles--;
+        // after last file is read, sort
+        if (numFiles === 0) {
+          console.log("\nDONE!");
+          names.sort().reverse().forEach(function (n) {
+            console.log(n);
+          });
+        }
+      });
+    }
   });
 
 
