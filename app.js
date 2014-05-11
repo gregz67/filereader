@@ -21,7 +21,7 @@ var names = [], filesDir = 'data/files',
       })
     })
   },
-  getFile = function(file) {
+  getLines = function(file) {
     var opts = {
       'flag': 'r',
       'encoding': 'utf8'
@@ -44,7 +44,7 @@ var names = [], filesDir = 'data/files',
 
 getFiles(filesDir).then(function(files) {
   console.log('files to read ' + files);
-  return Promise.all(files.map(getFile));
+  return Promise.all(files.map(getLines));
 }).then(function(lineArray) {
   lineArray.forEach(function(lines) {
     names = names.concat(lines);
