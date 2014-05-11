@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var Q = require('Q');
 
 /**
  *
@@ -8,33 +9,32 @@ var path = require('path');
  *
  */
 
-var filesDir = 'data/files';
-var names = [];
-
-fs.readdir(filesDir, function (err, fileArray) {
-  var numFiles = fileArray.length;
-  console.log('files to read ' + fileArray);
-
-  fileArray.forEach(function (file) {
+var filesDir = 'data/files', names = [],
+  getFiles = function(dir) {
+    return Q.nfcall(fs.readdir, dir);
+  },
+  getFile = function(file) {
+    var opts = {
+      'flag': 'r',
+      'encoding': 'utf8'
+    };
     console.log('processing ' + file);
+    return Q.nfcall(fs.readFile, path.join(filesDir, file), opts);
+  };
 
-    // what events can we listen for on data?
-    fs.readFile(path.join(filesDir, file), function (err, data) {
-
-      var fileLines = data.toString().split('\n');
-
-      fileLines.forEach(function (line) {
-        names.push(line);
-      });
-
-      // this feels *less* wrong
-      numFiles--;
-      if (numFiles === 0) {
-        console.log("\nDONE!");
-        names.sort().reverse().forEach(function (n) {
-          console.log(n);
-        });
-      }
-    });
+getFiles(filesDir).then(function(fileArray) {
+  console.log('files to read ' + fileArray);
+  return Q.all(fileArray.map(getFile));
+}).then(function(contentsArray) {
+  contentsArray.forEach(function(contents) {
+    names = names.concat(contents.split('\n').filter(function(v) {
+      return v !== '';
+    }));
   });
+  console.log('DONE!');
+  names.sort().reverse().forEach(function(n) {
+    console.log(n);
+  });
+}).catch(function(err) {
+  console.log(err);
 });
